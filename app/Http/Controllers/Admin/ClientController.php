@@ -31,7 +31,7 @@ class ClientController extends AdminController
         $input = $request->all();
 
         $validated = $request->validate([
-            'name' => 'required',
+            'name' => 'required|unique:clients,name',
             'address' => 'required'
         ]);
 
@@ -52,7 +52,7 @@ class ClientController extends AdminController
         $input = $request->all();
 
         $validated = $request->validate([
-            'name' => 'required',
+            'name' => 'required|unique:clients,name',
             'address' => 'required'
         ]);
 

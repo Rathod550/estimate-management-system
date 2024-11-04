@@ -33,7 +33,7 @@ class ServiceController extends AdminController
         $input = $request->all();
 
         $validated = $request->validate([
-            'name' => 'required',
+            'name' => 'required|unique:services,name',
         ]);
 
         Service::create($input);
@@ -53,7 +53,7 @@ class ServiceController extends AdminController
         $input = $request->all();
 
         $validated = $request->validate([
-            'name' => 'required',
+            'name' => 'required|unique:services,name',
         ]);
 
         $service = Service::find($id);

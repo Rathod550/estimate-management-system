@@ -39,7 +39,7 @@ class UdsnRegController extends AdminController
 
         $validated = $request->validate([
             'client_id' => 'required',
-            'udsn_number' => 'required'
+            'udsn_number' => 'required|unique:udsn_regs,udsn_number'
         ]);
 
         UdsnRegs::create($input);
@@ -61,7 +61,7 @@ class UdsnRegController extends AdminController
 
         $validated = $request->validate([
             'client_id' => 'required',
-            'udsn_number' => 'required'
+            'udsn_number' => 'required|unique:udsn_regs,udsn_number'
         ]);
 
         $udsnRegs = UdsnRegs::find($id);

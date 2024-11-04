@@ -36,9 +36,10 @@ class UserController extends AdminController
 
         $validated = $request->validate([
             'name' => 'required',
-            'email' => 'required',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required'
         ]);
+
 
         $input['password'] = Hash::make($input['password']);
 
@@ -58,13 +59,12 @@ class UserController extends AdminController
     {
         $input = $request->all();
 
+        $user = User::find($id);
+
         $validated = $request->validate([
             'name' => 'required',
-            'email' => 'required'
+            'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
-
-
-        $user = User::find($id);
 
         $input['password'] = isset($input['password']) ? Hash::make($input['password']) : $user->password;
 

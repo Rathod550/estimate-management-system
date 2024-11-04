@@ -31,7 +31,7 @@ class CategoryController extends AdminController
         $input = $request->all();
 
         $validated = $request->validate([
-            'name' => 'required',
+            'name' => 'required|unique:categories,name',
         ]);
 
         Category::create($input);
@@ -51,7 +51,7 @@ class CategoryController extends AdminController
         $input = $request->all();
 
         $validated = $request->validate([
-            'name' => 'required',
+            'name' => 'required|unique:categories,name',
         ]);
 
         $category = Category::find($id);
