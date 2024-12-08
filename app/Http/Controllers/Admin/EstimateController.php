@@ -122,6 +122,7 @@ class EstimateController extends AdminController
                 $input['gst_type'] = Session::get('loginType');
                 $input['price'] = $totalPrice;
                 $input['service_id'] = implode(',',$input['services']);
+                $input['total_price'] = $totalPrice;
 
                 if(Session::get('loginType') == 'kda'){
                     $gstAmount = ($totalPrice * 9) / 100;
@@ -221,6 +222,7 @@ class EstimateController extends AdminController
                 $input['gst_type'] = Session::get('loginType');
                 $input['price'] = $totalPrice;
                 $input['service_id'] = implode(',',$input['services']);
+                $input['total_price'] = $totalPrice;
                 
                 $estimate = Estimate::find($id);
 
