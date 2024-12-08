@@ -23,7 +23,10 @@ class EstimateController extends AdminController
     public function index(Request $request)
     {
         if ($request->ajax()) {
+
             $data = Estimate::select('*');
+            $services = Service::pluck('name','id')->all();
+
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('client', function($row){
@@ -42,8 +45,12 @@ class EstimateController extends AdminController
                             $q->where("name",'like',"%".$keyword."%");
                         });
                     })
-                    ->addColumn('service', function($row){
-                        return $row->service->name ?? '';
+                    ->addColumn('service', function($row) use ($services){
+                        $service = [];
+                        foreach(explode(',',$row->service_id) as $key => $value){
+                            $service[$key] = $services[$value] ?? '';
+                        }
+                        return $service ?? '';
                     })
                     ->filterColumn('service', function ($query, $keyword) {
                         $query->whereHas('service', function($q) use($keyword){
@@ -85,8 +92,8 @@ class EstimateController extends AdminController
         $validator = Validator::make($input, [
             'client_id'=>'required',
             'category_id'=>'required',
-            'service_id'=>'required',
-            'service.*.price'=>'required',
+            'services'=>'required',
+            'service.*.*.price' => 'required|numeric',
         ]);
 
         if ($validator->passes()) {
@@ -95,20 +102,33 @@ class EstimateController extends AdminController
             DB::beginTransaction();
             try {
 
+                $totalPriceArray = [];
+
+                foreach ($input['service'] as $key => $value) {
+                    foreach($value as $kkey => $vvalue){
+                        if(isset($vvalue['total_price'])){
+                            $totalPriceArray[] = $vvalue['total_price'];
+                        }
+                    }
+                }
+
+                $totalPrice = array_sum($totalPriceArray);
+
                 $userIds = User::where('id', '!=', auth()->user()->id)->whereNull('is_super_admin')->pluck('id')->all();
                 
                 $input['service_content'] = json_encode($input['service']);
                 $input['admin_approvel'] = implode(',',$userIds);
                 $input['admin_id'] = auth()->user()->id;
                 $input['gst_type'] = Session::get('loginType');
-                $input['total_price'] = $input['price'];
+                $input['price'] = $totalPrice;
+                $input['service_id'] = implode(',',$input['services']);
 
                 if(Session::get('loginType') == 'kda'){
-                    $gstAmount = ($input['price'] * 9) / 100;
-                    $sgstAmount = ($input['price'] * 9) / 100;
+                    $gstAmount = ($totalPrice * 9) / 100;
+                    $sgstAmount = ($totalPrice * 9) / 100;
                     $input['gst'] = $gstAmount;
                     $input['sgst'] = $sgstAmount;
-                    $input['total_price'] = $input['price'] + $gstAmount + $sgstAmount;
+                    $input['total_price'] = $totalPrice + $gstAmount + $sgstAmount;
                 }
 
                 Estimate::create($input);
@@ -134,19 +154,34 @@ class EstimateController extends AdminController
     public function edit($id)
     {
         $estimate = Estimate::find($id);
+
+        $services = [];
+        if(!empty($estimate->service_id)){
+            $services = explode(',',$estimate->service_id);
+        }
+
         $client = Client::pluck('name','id')->all();
         $category = Category::pluck('name','id')->all();
         $service = Service::pluck('name','id')->all();
-        return view('admin.estimate.edit',compact('estimate', 'client', 'category', 'service'));
+        return view('admin.estimate.edit',compact('estimate', 'client', 'category', 'service', 'services'));
     }
 
     public function show($id)
     {
         $estimate = Estimate::find($id);
+
+        $service = Service::pluck('name','id')->all();
+        $serviceName = [];
+        foreach(explode(',',$estimate->service_id) as $key => $value){
+            $serviceName[] = $service[$value];
+        }
+
+        $serviceName = implode(',',$serviceName);
+
         $estimateApprovelAdminsIds = explode(',',$estimate->admin_approvel);
         $underApprovelAdminName = User::whereIn('id',$estimateApprovelAdminsIds)->pluck('name','name')->all();
 
-        return view('admin.estimate.show',compact('estimate','underApprovelAdminName'));
+        return view('admin.estimate.show',compact('estimate','underApprovelAdminName','serviceName','service'));
     }
 
     public function update(Request $request, $id)
@@ -156,8 +191,8 @@ class EstimateController extends AdminController
         $validator = Validator::make($input, [
             'client_id'=>'required',
             'category_id'=>'required',
-            'service_id'=>'required',
-            'service.*.price'=>'required',
+            'services'=>'required',
+            'service.*.*.price' => 'required|numeric',
         ]);
 
         if ($validator->passes()) {
@@ -166,11 +201,26 @@ class EstimateController extends AdminController
             DB::beginTransaction();
             try {
 
+                $totalPriceArray = [];
+
+                foreach ($input['service'] as $key => $value) {
+                    foreach($value as $kkey => $vvalue){
+                        if(isset($vvalue['total_price'])){
+                            $totalPriceArray[] = $vvalue['total_price'];
+                        }
+                    }
+                }
+
+                $totalPrice = array_sum($totalPriceArray);
+
                 $userIds = User::where('id', '!=', auth()->user()->id)->whereNull('is_super_admin')->pluck('id')->all();
-                
+
                 $input['service_content'] = json_encode($input['service']);
                 $input['admin_approvel'] = implode(',',$userIds);
-                $input['total_price'] = $input['price'];
+                $input['admin_id'] = auth()->user()->id;
+                $input['gst_type'] = Session::get('loginType');
+                $input['price'] = $totalPrice;
+                $input['service_id'] = implode(',',$input['services']);
                 
                 $estimate = Estimate::find($id);
 
@@ -211,8 +261,9 @@ class EstimateController extends AdminController
     public function generatePDF($id, $type)
     {
         $estimate = Estimate::find($id);
+        $service = Service::pluck('name','id')->all();
         $fileName = $estimate->client->name."_"."estimate.pdf";
-        $pdf = PDF::loadView('admin.estimate.estimatePdf', ['estimate' => $estimate]);
+        $pdf = PDF::loadView('admin.estimate.estimatePdf', ['estimate' => $estimate, 'service' => $service]);
         
         if($type == 'download'){
             return $pdf->download($fileName);

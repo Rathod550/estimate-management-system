@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminController;
 use Illuminate\Http\Request;
 use App\Models\Estimate;
 use App\Models\User;
+use App\Models\Service;
 use DataTables;
 
 class EstimateApprovelController extends AdminController
@@ -13,7 +14,10 @@ class EstimateApprovelController extends AdminController
     public function index(Request $request)
     {
         if ($request->ajax()) {
+
             $data = Estimate::select('*')->where("admin_approvel",'like',"%".auth()->user()->id."%");
+            $services = Service::pluck('name','id')->all();
+
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('client', function($row){
@@ -32,8 +36,12 @@ class EstimateApprovelController extends AdminController
                             $q->where("name",'like',"%".$keyword."%");
                         });
                     })
-                    ->addColumn('service', function($row){
-                        return $row->service->name ?? '';
+                    ->addColumn('service', function($row) use ($services){
+                        $service = [];
+                        foreach(explode(',',$row->service_id) as $key => $value){
+                            $service[$key] = $services[$value] ?? '';
+                        }
+                        return $service ?? '';
                     })
                     ->filterColumn('service', function ($query, $keyword) {
                         $query->whereHas('service', function($q) use($keyword){
@@ -53,7 +61,16 @@ class EstimateApprovelController extends AdminController
     public function show($id)
     {
         $estimate = Estimate::find($id);
-        return view('admin.estimateApprovel.show',compact('estimate'));
+
+        $service = Service::pluck('name','id')->all();
+        $serviceName = [];
+        foreach(explode(',',$estimate->service_id) as $key => $value){
+            $serviceName[] = $service[$value];
+        }
+
+        $serviceName = implode(',',$serviceName);
+
+        return view('admin.estimateApprovel.show',compact('estimate','service','serviceName'));
     }
 
     public function approve($id)

@@ -128,10 +128,6 @@
 		<strong>Address</strong> : {{ $estimate->client->address ?? 'N/A' }}
 	</div>
 	<br>
-	<div>
-		<strong>Service Name</strong> : {{ $estimate->service->name ?? 'N/A' }}
-	</div>
-	<br>
 	<div class="table">
 		<table width="100%">
 		  <tr>
@@ -142,14 +138,22 @@
 			@if(!empty($estimate))
 		        @php
 		            $serviceContent = json_decode($estimate->service_content);
+		            $count = 0;
 		        @endphp
 		        @if(!empty($serviceContent))
 		            @foreach($serviceContent as $key => $value)
-						<tr>
-							<td width="5%">{{ ++$key }}</td>
-							<td> &nbsp; {{ $value->name ?? '' }}</td>
-							<td width="20%" style="text-align: right;">{{ $value->price ?? '' }} &nbsp;</td>
+	            		<tr>
+							<td width="5%"></td>
+							<td><center><strong>{{ $service[$key] ?? '' }}</strong></center></td>
+							<td width="20%"><center>-</center></td>
 						</tr>
+		            	@foreach($value as $kkey => $vvalue)
+							<tr>
+								<td width="5%">{{ ++$count }}</td>
+								<td> &nbsp; {{ $vvalue->name ?? '' }}</td>
+								<td width="20%" style="text-align: right;">{{ $vvalue->price ?? '' }} &nbsp;</td>
+							</tr>
+						@endforeach
 		            @endforeach
 		        @endif
 		    @endif

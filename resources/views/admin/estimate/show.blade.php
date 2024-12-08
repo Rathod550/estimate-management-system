@@ -40,7 +40,7 @@
 								<div class="col-md-12">
 							        <div class="form-group">
 							            <label>Service Name: </label><br>
-							            <input type="text" value="{{ $estimate->service->name ?? '' }}" class="form-control" readonly>
+							            <input type="text" value="{{ $serviceName ?? '' }}" class="form-control" readonly>
 							        </div>
 							    </div>
 							</div>
@@ -51,19 +51,36 @@
 
 						        @if(!empty($serviceContent))
 						            @foreach($serviceContent as $key => $value)
-						                <div class="row mt-3">
-						                    <div class="col-md-6">
-						                        <div class="form-group">
-						                            <input type="text" name="service[{{ $key }}][name]" value="{{ $value->name ?? '' }}" class="form-control" readonly>
-						                        </div>
-						                    </div>
-						                    <div class="col-md-6">
-						                        <div class="form-group">
-						                            <input type="number" name="service[{{ $key }}][price]" class="form-control price" value="{{ $value->price ?? '' }}" placeholder="Price">
-						                            <span class="text-danger error-text service_{{ $key }}_price_err"></span>
-						                        </div>
-						                    </div>
-						                </div>
+							            <h3 style="margin-top:20px;">{{ $service[$key] ?? '' }}</h3>
+							            @foreach($value as $kkey => $vvalue)
+							                <div class="row mt-3">
+							                    <div class="col-md-6">
+							                        <div class="form-group">
+							                            <input type="text" name="service[{{$key}}][{{ $kkey }}][name]" value="{{ $vvalue->name ?? '' }}" class="form-control" readonly>
+							                        </div>
+							                    </div>
+							                    <div class="col-md-6">
+							                        <div class="form-group">
+							                            <input type="text" name="service[{{$key}}][{{ $kkey }}][price]" class="form-control price price-service-{{ $key }}" value="{{ $vvalue->price ?? '' }}" data-id="{{ $key }}" placeholder="Price" readonly>
+							                            <span class="text-danger error-text service_{{ $key }}_price_err"></span>
+							                        </div>
+							                    </div>
+							                </div>
+							                @if($loop->last && isset($vvalue->total_price))
+					                            <div class="row mt-3">
+					                                <div class="col-md-6">
+					                                    <div class="form-group">
+					                                        <h4 class="mt-1" style="float:right;">Total Price</h4>
+					                                    </div>
+					                                </div>
+					                                <div class="col-md-6">
+					                                    <div class="form-group">
+					                                        <input type="text" name="service[{{$key}}][{{ $kkey }}][total_price]" class="form-control total-price-{{$key}}" placeholder="Total Price" value="{{ $vvalue->total_price ?? '' }}" readonly>
+					                                    </div>
+					                                </div>
+					                            </div>                
+					                        @endif
+							            @endforeach
 						            @endforeach
 						            @if(!empty($estimate->gst) && !empty($estimate->sgst))
 							            <div class="row mt-3">

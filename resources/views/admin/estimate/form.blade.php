@@ -14,15 +14,23 @@
         </div>
     </div>
 </div>
-<div class="row mt-2">
-    <div class="col-md-6">
-        <div class="form-group">
-            <label>Service: <span class="text-danger">*</span></label><br>
-            {!! Form::select('service_id',['' => 'Select Service']+$service, null, ['class' => 'form-select service-id']) !!}
-            <span class="text-danger error-text service_id_err"></span>
-        </div>
+<br>
+@if(!empty($service))
+    <label>Service: <span class="text-danger">*</span></label><br>
+    <div class="row">
+        @foreach($service as $key => $value)
+            <div class="col-md-4">
+                <div class="form-check">
+                    <input class="form-check-input" name="services[]" type="checkbox" value="{{ $key }}" id="service-{{$key}}" data-service-id="{{ $key }}" @if(!empty($services) && in_array($key,$services)) checked @endif>
+                    <label class="form-check-label" for="service-{{$key}}">
+                        {{$value}}
+                    </label>
+                </div>
+            </div>
+        @endforeach
+        <span class="text-danger error-text services_err"></span>
     </div>
-</div>
+@endif
 <div class="service-content mt-2">
     @if(!empty($estimate))
         @php
@@ -31,38 +39,49 @@
 
         @if(!empty($serviceContent))
             @foreach($serviceContent as $key => $value)
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <input type="text" name="service[{{ $key }}][name]" value="{{ $value->name ?? '' }}" class="form-control" readonly>
+                <div class="service-{{$key}}">
+                    <h3 style="margin-top:20px;">{{ $service[$key] ?? '' }}</h3>
+                    @foreach($value as $kkey => $vvalue)
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <input type="text" name="service[{{$key}}][{{ $kkey }}][name]" value="{{ $vvalue->name ?? '' }}" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <input type="text" name="service[{{$key}}][{{ $kkey }}][price]" class="form-control price price-service-{{ $key }}" value="{{ $vvalue->price ?? '' }}" data-id="{{ $key }}" placeholder="Price">
+                                    <span class="text-danger error-text service_{{$key}}_{{ $kkey }}_price_err"></span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <input type="number" name="service[{{ $key }}][price]" class="form-control price" value="{{ $value->price ?? '' }}" placeholder="Price">
-                            <span class="text-danger error-text service_{{ $key }}_price_err"></span>
-                        </div>
-                    </div>
+                        @if($loop->last && isset($vvalue->total_price))
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <h4 class="mt-1" style="float:right;">Total Price</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input type="text" name="service[{{$key}}][{{ $kkey }}][total_price]" class="form-control total-price-{{$key}}" placeholder="Total Price" value="{{ $vvalue->total_price ?? '' }}" readonly>
+                                    </div>
+                                </div>
+                            </div>                
+                        @endif
+                    @endforeach
                 </div>
             @endforeach
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <h4 class="mt-1" style="float:right;">Total Price</h4>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <input type="text" name="price" class="form-control total-price" placeholder="Total Price" value="{{ $estimate->total_price ?? '' }}" readonly>
-                    </div>
-                </div>
-            </div>
         @endif
     @endif
+    
 
 </div>
 <div class="row">
     <div class="col-md-12">
-        <center><button type="button" class="btn btn-success btn-sm mt-3 estimate-save-btn">Save</button></center>
+        <center>
+            <button type="button" class="btn btn-danger btn-sm mt-3 reset-btn">Reset</button>
+            <button type="button" class="btn btn-success btn-sm mt-3 estimate-save-btn">Save</button>
+        </center>
     </div>
 </div>

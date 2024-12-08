@@ -14,7 +14,7 @@ function getEstimateContent(serviceId){
         type: 'POST',
         data: {_token: token,service_id: serviceId},
         success: function(data) {
-            $(".service-content").html(data.view);
+            $(".service-content").append(data.view);
         }
     });
 }
@@ -22,8 +22,10 @@ function getEstimateContent(serviceId){
 $(document).on('keyup', ".price", function() {
     let total = 0;
 
+    var serviceId = $(this).data('id');
+
     // Loop through each element with the class 'price'
-    $(".price").each(function() {
+    $(".price-service-"+serviceId).each(function() {
         // Get the value of the current element and convert it to a number
         let value = parseFloat($(this).val());
 
@@ -34,7 +36,8 @@ $(document).on('keyup', ".price", function() {
     });
 
     // You can now use the 'total' variable for whatever you need
-    $(".total-price").val(total);
+    var className = 'total-price-'+serviceId;
+    $("."+className).val(total);
 });
 
 // estimate form submit
@@ -64,4 +67,19 @@ $(document).on('click','.estimate-save-btn',function (e) {
     $(this).attr("disabled", true);
     $(this).html('<i class="fa fa-spinner fa-spin"></i> Save');
     $(this).parents("form").ajaxSubmit(estimate);
+});
+
+// Attach a change event to all checkboxes with data-service-id
+$('input[data-service-id]').on('change', function() {
+    const serviceId = $(this).data('service-id'); // Get the data-service-id value
+    if ($(this).is(':checked')) {
+        getEstimateContent(serviceId);     
+    } else {
+        var className = 'service-'+serviceId;
+        $("."+className).remove();
+    }
+});
+
+$(document).on('click','.reset-btn',function(){
+    location.reload(true);
 });
